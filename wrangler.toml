@@ -10,4 +10,4 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "rounds"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id ="b65aa29e-023e-4044-b1f9-02af2a238604"
