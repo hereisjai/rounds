@@ -1,19 +1,20 @@
 # Rounds on Cloudflare
 
-Do not upload this zip in Workers & Pages. That button only accepts a static site.
+## Before the first deploy
 
-## Easiest: Deploy from GitHub
+Cloudflare does not create the database from the placeholder id. Create it once:
 
-Repo: https://github.com/hereisjai/rounds
+1. Cloudflare dashboard → Storage & databases → D1 → Create
+2. Name it `rounds`
+3. Copy the database id (a UUID)
+4. In this repo, edit `wrangler.toml` and replace `00000000-0000-0000-0000-000000000000` with that id
+5. Commit, or paste the id here and retry the Workers deploy
 
-1. Cloudflare dashboard → Workers & Pages → Create application
-2. Import a repository → pick `hereisjai/rounds`
-3. Deploy. Cloudflare creates the D1 database from `wrangler.toml` and runs the app.
-4. Open the `workers.dev` URL it gives you.
+Deploy command:
 
-Or open this link and confirm:
-
-https://deploy.workers.cloudflare.com/?url=https://github.com/hereisjai/rounds
+```
+npx wrangler d1 migrations apply DB --remote && npx wrangler deploy
+```
 
 ## Demo desks
 
@@ -23,5 +24,3 @@ https://deploy.workers.cloudflare.com/?url=https://github.com/hereisjai/rounds
 | Suresh, milk rider | 9845000002 | 2222 |
 | Kiran, technician owner | 9900000003 | 3333 |
 | Imran, technician | 9900000004 | 4444 |
-
-Milk and technician data are separate rows. The app stays up after you close the laptop.
