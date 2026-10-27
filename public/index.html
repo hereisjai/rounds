@@ -32,6 +32,7 @@
   button, input, select, textarea { font: inherit; color: inherit; }
   button { cursor: pointer; }
   .gate { min-height: 100%; display: grid; place-items: center; padding: 28px 16px 40px; }
+.gate[hidden], .app[hidden] { display: none !important; }
   .gate-card {
     width: min(440px, 100%);
     background: var(--card);
@@ -104,7 +105,10 @@
   .book-item { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
   .mapwrap { position: relative; min-height: 520px; overflow: hidden; }
   #map { position: absolute; inset: 0; }
-  .map-note { position: absolute; z-index: 500; left: 12px; bottom: 12px; background: rgba(255,253,248,.94); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font-size: 12px; max-width: 260px; }
+  .pin-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.pin-status { font-size: 12px; color: var(--ink-soft); margin-top: 6px; min-height: 16px; }
+.pin-status.ok { color: var(--moss); }
+.mapwrap.picking { outline: 3px solid var(--accent); outline-offset: -3px; }
   .empty { color: var(--ink-soft); padding: 8px 0 16px; font-size: 14px; }
   .err { color: #9b2c2c; font-size: 13px; min-height: 18px; }
   .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: #f7f1e7; padding: 10px 14px; border-radius: 999px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
@@ -161,7 +165,7 @@ let session = null;
 let bag = { roundtrip: true, stops: [], book: [], summary: null, geometry: null };
 let crew = [];
 let tab = "round";
-let map, layer, suggestTimer, gateMode = "login";
+let map, layer, pinLayer, suggestTimer, gateMode = "login", picking = false;
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 function me() { return session && session.user; }
@@ -311,6 +315,7 @@ async function enter(data) {
   paintHeader();
   if (!map) initMap();
   else { map.invalidateSize(); draw(); }
+  setTimeout(() => map && map.invalidateSize(), 200);
   render();
 }
 function paintHeader() {
@@ -393,8 +398,13 @@ function addView() {
   return `<form id="addForm">
     <label>Name</label><input name="name" required />
     <label>Phone</label><input name="phone" />
-    <label>Address</label><input name="address" id="addr" required placeholder="Search a place or street" autocomplete="off" />
+    <label>Address</label><input name="address" id="addr" placeholder="Search a place, or drop a pin" autocomplete="off" />
     <div class="suggest" id="suggest" hidden></div>
+    <div class="pin-tools">
+      <button class="btn" type="button" id="useGps">Use my GPS</button>
+      <button class="btn" type="button" id="dropPin">Drop pin on map</button>
+    </div>
+    <div class="pin-status" id="pinStatus">No pin yet. Address search is approximate — a pin is exact.</div>
     <label>${t.extra}</label><input name="extra" placeholder="${t.extraPh}" />
     <label>Note for the person on the round</label><textarea name="note"></textarea>
     <input type="hidden" name="lat" /><input type="hidden" name="lng" />
@@ -432,24 +442,89 @@ function bind() {
       clearTimeout(suggestTimer);
       suggestTimer = setTimeout(() => searchAddr(e.target.value), 280);
     };
+    document.getElementById("useGps").onclick = useGps;
+    document.getElementById("dropPin").onclick = togglePick;
     form.onsubmit = (e) => { e.preventDefault(); commitForm(form, true); };
     document.getElementById("saveBookOnly").onclick = () => commitForm(form, false);
+  } else if (picking) {
+    picking = false;
+    document.querySelector(".mapwrap")?.classList.remove("picking");
   }
 }
 async function commitForm(form, toRound) {
   const data = Object.fromEntries(new FormData(form).entries());
   if (!data.name.trim()) return;
-  const stop = { id: uid(), done: false, name: data.name.trim(), phone: data.phone.trim(), address: data.address.trim(), note: data.note.trim(), extra: data.extra.trim(), lat: data.lat ? Number(data.lat) : null, lng: data.lng ? Number(data.lng) : null };
+  const lat = data.lat ? Number(data.lat) : null;
+  const lng = data.lng ? Number(data.lng) : null;
+  if (!data.address.trim() && !(lat && lng)) { toast("Add an address or drop a pin"); return; }
+  const stop = {
+    id: uid(), done: false,
+    name: data.name.trim(),
+    phone: data.phone.trim(),
+    address: data.address.trim() || "Pinned on map",
+    note: data.note.trim(),
+    extra: data.extra.trim(),
+    lat, lng
+  };
   const hit = bag.book.find((b) => b.name.toLowerCase() === stop.name.toLowerCase() && b.address === stop.address);
   if (hit) Object.assign(hit, stop, { id: hit.id });
   else bag.book.push({ ...stop });
   if (toRound) { bag.stops.push({ ...stop, id: uid() }); toast("Added to today’s round"); tab = "round"; }
   else toast("Saved to address book");
+  picking = false;
   bag.summary = null;
   bag.geometry = null;
   await persist();
   render();
   draw();
+}
+function setPin(lat, lng, label) {
+  const latEl = document.querySelector("[name=lat]");
+  const lngEl = document.querySelector("[name=lng]");
+  const status = document.getElementById("pinStatus");
+  if (!latEl || !lngEl) return;
+  latEl.value = lat.toFixed(6);
+  lngEl.value = lng.toFixed(6);
+  if (status) {
+    status.classList.add("ok");
+    status.textContent = (label || "Pinned") + " · " + lat.toFixed(5) + ", " + lng.toFixed(5);
+  }
+  if (!pinLayer) pinLayer = L.layerGroup().addTo(map);
+  pinLayer.clearLayers();
+  const marker = L.marker([lat, lng], { draggable: true }).addTo(pinLayer);
+  marker.on("dragend", () => {
+    const p = marker.getLatLng();
+    setPin(p.lat, p.lng, "Pin moved");
+    reverseFill(p.lat, p.lng);
+  });
+  map.setView([lat, lng], Math.max(map.getZoom(), 16));
+}
+async function reverseFill(lat, lng) {
+  const addr = document.getElementById("addr");
+  if (!addr || addr.value.trim()) return;
+  try {
+    const json = await (await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`)).json();
+    const f = (json.features || [])[0];
+    if (!f) return;
+    const p = f.properties;
+    addr.value = [p.name, p.street, p.housenumber, p.city || p.district, p.state].filter(Boolean).join(", ");
+  } catch (e) {}
+}
+function togglePick() {
+  picking = !picking;
+  document.querySelector(".mapwrap")?.classList.toggle("picking", picking);
+  const btn = document.getElementById("dropPin");
+  if (btn) btn.textContent = picking ? "Click the map…" : "Drop pin on map";
+  toast(picking ? "Tap the map to place the stop" : "Pin mode off");
+}
+function useGps() {
+  if (!navigator.geolocation) { toast("GPS not available"); return; }
+  toast("Getting location…");
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude, longitude } = pos.coords;
+    setPin(latitude, longitude, "My GPS");
+    await reverseFill(latitude, longitude);
+  }, () => toast("Location blocked"), { enableHighAccuracy: true, timeout: 10000 });
 }
 async function searchAddr(q) {
   const box = document.getElementById("suggest");
@@ -468,8 +543,7 @@ async function searchAddr(q) {
       const [lng, lat] = f.geometry.coordinates;
       const p = f.properties;
       document.getElementById("addr").value = [p.name, p.street, p.housenumber, p.city || p.district, p.state].filter(Boolean).join(", ");
-      document.querySelector("[name=lat]").value = lat;
-      document.querySelector("[name=lng]").value = lng;
+      setPin(lat, lng, "From search");
       box.hidden = true;
     });
   } catch (e) { box.hidden = true; }
@@ -512,6 +586,16 @@ function initMap() {
   L.control.zoom({ position: "bottomright" }).addTo(map);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { attribution: "&copy; OSM &copy; CARTO", maxZoom: 19 }).addTo(map);
   layer = L.layerGroup().addTo(map);
+  pinLayer = L.layerGroup().addTo(map);
+  map.on("click", (e) => {
+    if (!picking) return;
+    setPin(e.latlng.lat, e.latlng.lng, "Dropped pin");
+    reverseFill(e.latlng.lat, e.latlng.lng);
+    picking = false;
+    document.querySelector(".mapwrap")?.classList.remove("picking");
+    const btn = document.getElementById("dropPin");
+    if (btn) btn.textContent = "Drop pin on map";
+  });
   draw();
 }
 function draw() {
