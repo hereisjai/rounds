@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#1c1915" />
+<title>Rounds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,520;9..144,640&family=Outfit:wght@380;460;560;650&display=swap" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --ink: #1c1915;
+    --ink-soft: #5c564c;
+    --line: #e4ddd0;
+    --paper: #f3efe6;
+    --card: #fffdf8;
+    --accent: #c4511a;
+    --accent-soft: #f3ece1;
+    --moss: #2c6b4f;
+    --shadow: 0 10px 30px rgba(40, 28, 14, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: Outfit, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(900px 420px at 100% -10%, var(--accent-soft) 0%, transparent 55%),
+      var(--paper);
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .gate { min-height: 100%; display: grid; place-items: center; padding: 28px 16px 40px; }
+  .gate-card {
+    width: min(440px, 100%);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    padding: 22px;
+  }
+  .mark {
+    width: 36px; height: 36px; border-radius: 11px; background: var(--ink); color: #f6e7d4;
+    display: grid; place-items: center; font-family: Fraunces, serif; font-weight: 640;
+  }
+  h1 { font-family: Fraunces, serif; font-weight: 640; letter-spacing: -0.03em; margin: 10px 0 4px; }
+  .sub { color: var(--ink-soft); margin: 0 0 16px; font-size: 14px; }
+  label { display: block; font-size: 12px; color: var(--ink-soft); margin: 10px 0 4px; }
+  input, select, textarea {
+    width: 100%; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px;
+  }
+  textarea { min-height: 68px; resize: vertical; }
+  .btn {
+    border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px; font-size: 14px;
+  }
+  .btn.primary { background: var(--accent); color: white; border-color: transparent; }
+  .btn.dark { background: var(--ink); color: #f6efe6; border-color: transparent; }
+  .btn.ghost { background: transparent; }
+  .row-actions, .form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .app { max-width: 1180px; margin: 0 auto; min-height: 100%; display: grid; grid-template-rows: auto 1fr; }
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px 8px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand h1 { font-size: 22px; margin: 0; }
+  .brand p { margin: 0; color: var(--ink-soft); font-size: 12.5px; }
+  .who { display: flex; align-items: center; gap: 8px; }
+  .badge {
+    font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+    background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 4px 8px; white-space: nowrap;
+  }
+  .layout { display: grid; grid-template-columns: 400px 1fr; gap: 14px; padding: 8px 14px 18px; }
+  .panel, .mapwrap {
+    background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); min-height: 0;
+  }
+  .panel { display: flex; flex-direction: column; overflow: hidden; }
+  .tabs { display: flex; gap: 6px; padding: 12px 12px 0; }
+  .tabs button { border: 0; background: transparent; padding: 8px 10px; border-radius: 10px; color: var(--ink-soft); font-size: 14px; }
+  .tabs button.on { background: var(--accent-soft); color: var(--ink); }
+  .scroll { overflow: auto; padding: 12px; flex: 1; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stat { background: var(--accent-soft); border-radius: 14px; padding: 10px 12px; }
+  .stat b { display: block; font-family: Fraunces, serif; font-size: 20px; }
+  .stat span, .meta { color: var(--ink-soft); font-size: 12px; }
+  .stop { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; padding: 12px 4px; border-top: 1px solid var(--line); }
+  .stop.done { opacity: 0.55; }
+  .num {
+    width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent); color: white; font-size: 13px; font-weight: 650;
+  }
+  .stop.done .num { background: var(--moss); }
+  .stop h3 { margin: 0 0 2px; font-size: 15.5px; font-weight: 560; }
+  .chip { display: inline-block; background: var(--accent-soft); border-radius: 999px; padding: 2px 8px; font-size: 12px; margin-top: 6px; }
+  .stop .ops { display: flex; flex-direction: column; gap: 6px; }
+  .stop .ops button, .iconbtn { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 6px 8px; font-size: 12px; }
+  .next-card { background: var(--ink); color: #f7f1e7; border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .next-card .kicker { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #d9c8b2; }
+  .next-card h2 { font-family: Fraunces, serif; margin: 4px 0 6px; font-size: 24px; }
+  .next-card .meta { color: #e6d9c8; }
+  .next-card .row-actions { margin-top: 12px; }
+  .next-card .btn { background: transparent; color: #f7f1e7; border-color: #6d6256; }
+  .next-card .btn.primary { background: var(--accent); color: white; border-color: transparent; }
+  .suggest { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-top: 6px; background: white; }
+  .suggest button { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: white; padding: 8px 10px; font-size: 13px; }
+  .book-item { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+  .mapwrap { position: relative; min-height: 520px; overflow: hidden; }
+  #map { position: absolute; inset: 0; }
+  .map-note { position: absolute; z-index: 500; left: 12px; bottom: 12px; background: rgba(255,253,248,.94); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font-size: 12px; max-width: 260px; }
+  .empty { color: var(--ink-soft); padding: 8px 0 16px; font-size: 14px; }
+  .err { color: #9b2c2c; font-size: 13px; min-height: 18px; }
+  .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: #f7f1e7; padding: 10px 14px; border-radius: 999px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
+  .toast.show { opacity: 1; }
+  .linkish { border: 0; background: none; color: var(--accent); padding: 0; font-size: 13px; }
+  .hint { font-size: 12px; color: var(--ink-soft); background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin-top: 14px; }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .mapwrap { min-height: 320px; height: 320px; order: -1; }
+    header.top { align-items: flex-start; flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="mark" id="gateMark">R</div>
+    <h1>Rounds</h1>
+    <p class="sub" id="gateSub">Sign in with your phone. You only see your own round.</p>
+    <div id="gateBody"></div>
+  </div>
+</div>
+<div class="app" id="shell" hidden>
+  <header class="top">
+    <div class="brand">
+      <div class="mark" id="appMark">R</div>
+      <div>
+        <h1 id="bizName">Rounds</h1>
+        <p id="tagline"></p>
+      </div>
+    </div>
+    <div class="who">
+      <span class="badge" id="tradeBadge"></span>
+      <span class="meta" id="userLine"></span>
+      <button class="btn ghost" id="logout">Sign out</button>
+    </div>
+  </header>
+  <div class="layout">
+    <section class="panel">
+      <div class="tabs" id="tabs"></div>
+      <div class="scroll" id="view"></div>
+    </section>
+    <section class="mapwrap">
+      <div id="map"></div>
+      <div class="map-note">Road distance from OpenStreetMap. Navigate opens this stop in Google Maps.</div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const TOKEN_KEY = "rounds-token";
+let session = null;
+let bag = { roundtrip: true, stops: [], book: [], summary: null, geometry: null };
+let crew = [];
+let tab = "round";
+let map, layer, suggestTimer, gateMode = "login";
+
+function uid() { return Math.random().toString(36).slice(2, 9); }
+function me() { return session && session.user; }
+function biz() { return session && session.business; }
+function theme() { return session && session.theme; }
+function isOwner() { return me() && me().role === "owner"; }
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2200);
+}
+function km(m) { return (m / 1000).toFixed(m < 10000 ? 1 : 0) + " km"; }
+function mins(s) { return Math.max(1, Math.round(s / 60)) + " min"; }
+function esc(s) {
+  return String(s || "").replace(/[&<>"']/g, (c) => {
+    if (c === "&") return "&" + "amp;";
+    if (c === "<") return "&" + "lt;";
+    if (c === ">") return "&" + "gt;";
+    if (c === '"') return "&" + "quot;";
+    return "&" + "#39;";
+  });
+}
+function applyTheme() {
+  const t = theme();
+  if (!t) return;
+  const root = document.documentElement;
+  root.style.setProperty("--accent", t.accent);
+  root.style.setProperty("--accent-soft", t.accentSoft);
+  root.style.setProperty("--paper", t.paper);
+  root.style.setProperty("--ink", t.ink);
+  root.style.setProperty("--card", t.card);
+  document.querySelector("meta[name=theme-color]").content = t.ink;
+  document.getElementById("appMark").textContent = t.mark;
+  document.getElementById("gateMark").textContent = t.mark;
+  document.title = biz().name + " · Rounds";
+}
+async function api(path, options = {}) {
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) headers.Authorization = "Bearer " + token;
+  const res = await fetch(path, { ...options, headers, body: options.body ? JSON.stringify(options.body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+async function persist() {
+  try { await api("/api/bag", { method: "PUT", body: bag }); }
+  catch (e) { toast("Could not save"); }
+}
+
+function showGate() {
+  document.getElementById("shell").hidden = true;
+  document.getElementById("gate").hidden = false;
+  const body = document.getElementById("gateBody");
+  const sub = document.getElementById("gateSub");
+  if (gateMode === "login") {
+    sub.textContent = "Sign in with your phone. You only see your own round.";
+    body.innerHTML = `
+      <form id="loginForm">
+        <label>Phone</label><input name="phone" required inputmode="numeric" />
+        <label>PIN</label><input name="pin" required maxlength="6" />
+        <p class="err" id="loginErr"></p>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Sign in</button>
+        </div>
+      </form>
+      <div class="row-actions" style="margin-top:10px">
+        <button class="linkish" id="toRegister">Create a business</button>
+        <button class="linkish" id="toJoin">Join with a code</button>
+      </div>
+      <div class="hint">Demo desks — milk: 9845000001 / 1111. Technician: 9900000003 / 3333. Riders use 2222 and 4444.</div>`;
+    document.getElementById("toRegister").onclick = () => { gateMode = "register"; showGate(); };
+    document.getElementById("toJoin").onclick = () => { gateMode = "join"; showGate(); };
+    document.getElementById("loginForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const d = Object.fromEntries(new FormData(e.target).entries());
+      try {
+        const data = await api("/api/login", { method: "POST", body: d });
+        await enter(data);
+      } catch (err) {
+        document.getElementById("loginErr").textContent = err.message;
+      }
+    };
+  }
+  if (gateMode === "register") {
+    sub.textContent = "Pick the trade once. Riders who join inherit it and cannot see other businesses.";
+    body.innerHTML = `
+      <form id="regForm">
+        <label>Your name</label><input name="name" required />
+        <label>Phone</label><input name="phone" required />
+        <label>PIN</label><input name="pin" required maxlength="6" />
+        <label>Business name</label><input name="biz" required />
+        <label>This business is</label>
+        <select name="trade">
+          <option value="milk">Milk supplier</option>
+          <option value="service">Technician service</option>
+          <option value="custom">Something else</option>
+        </select>
+        <p class="err" id="regErr"></p>
+        <div class="form-actions" style="margin-top:14px">
+          <button class="btn primary" type="submit">Create and enter</button>
+          <button class="btn ghost" type="button" id="backLogin">Back</button>
+        </div>
+      </form>`;
+    document.getElementById("backLogin").onclick = () => { gateMode = "login"; showGate(); };
+    document.getElementById("regForm").onsubmit = async (e) => {
+      e.preventDefault();
+      try { await enter(await api("/api/register", { method: "POST", body: Object.fromEntries(new FormData(e.target).entries()) })); }
+      catch (err) { document.getElementById("regErr").textContent = err.message; }
+    };
+  }
+  if (gateMode === "join") {
+    sub.textContent = "Join your owner’s business. You get their trade, not a choice of trades.";
+    body.innerHTML = `
+      <form id="joinForm">
+        <label>Your name</label><input name="name" required />
+        <label>Phone</label><input name="phone" required />
+        <label>PIN</label><input name="pin" required maxlength="6" />
+        <label>Business code</label><input name="code" required />
+        <p class="err" id="joinErr"></p>
+        <div class="form-actions" style="margin-top:14px">
+          <button class="btn primary" type="submit">Join round</button>
+          <button class="btn ghost" type="button" id="backLogin">Back</button>
+        </div>
+      </form>`;
+    document.getElementById("backLogin").onclick = () => { gateMode = "login"; showGate(); };
+    document.getElementById("joinForm").onsubmit = async (e) => {
+      e.preventDefault();
+      try { await enter(await api("/api/join", { method: "POST", body: Object.fromEntries(new FormData(e.target).entries()) })); }
+      catch (err) { document.getElementById("joinErr").textContent = err.message; }
+    };
+  }
+}
+
+async function enter(data) {
+  localStorage.setItem(TOKEN_KEY, data.token);
+  session = data;
+  applyTheme();
+  bag = await api("/api/bag");
+  const meData = await api("/api/me");
+  crew = meData.crew || [];
+  if (meData.business.code) session.business.code = meData.business.code;
+  document.getElementById("gate").hidden = true;
+  document.getElementById("shell").hidden = false;
+  tab = "round";
+  paintHeader();
+  if (!map) initMap();
+  else { map.invalidateSize(); draw(); }
+  render();
+}
+function paintHeader() {
+  const b = biz(), u = me(), t = theme();
+  document.getElementById("bizName").textContent = b.name;
+  document.getElementById("tagline").textContent = u.name + " · " + (u.role === "owner" ? "owner" : "on the round");
+  document.getElementById("tradeBadge").textContent = t.label;
+  document.getElementById("userLine").textContent = t.tagline;
+}
+async function logout() {
+  try { await api("/api/logout", { method: "POST" }); } catch (e) {}
+  localStorage.removeItem(TOKEN_KEY);
+  session = null;
+  gateMode = "login";
+  showGate();
+}
+
+function pending() { return bag.stops.filter((s) => !s.done); }
+function nextStop() { return bag.stops.find((s) => !s.done); }
+function render() {
+  const tabs = document.getElementById("tabs");
+  const items = isOwner()
+    ? [["round", "Today’s round"], ["add", "Add stop"], ["book", "Address book"], ["team", "Team"]]
+    : [["round", "Today’s round"], ["book", "Address book"]];
+  tabs.innerHTML = items.map(([id, label]) => `<button data-tab="${id}" class="${tab === id ? "on" : ""}">${label}</button>`).join("");
+  tabs.querySelectorAll("button").forEach((b) => b.onclick = () => { tab = b.dataset.tab; render(); });
+  const view = document.getElementById("view");
+  if (tab === "round") view.innerHTML = roundView();
+  if (tab === "add") view.innerHTML = addView();
+  if (tab === "book") view.innerHTML = bookView();
+  if (tab === "team") view.innerHTML = teamView();
+  bind();
+}
+function roundView() {
+  const t = theme();
+  const open = pending();
+  const done = bag.stops.length - open.length;
+  const dist = bag.summary ? km(bag.summary.distance) : "—";
+  const dur = bag.summary ? mins(bag.summary.duration) : "—";
+  const nxt = nextStop();
+  const ownerTools = isOwner()
+    ? `<button class="btn dark" id="optimize">Shortest loop</button><button class="btn" id="toggleLoop">${bag.roundtrip ? "Loop back: on" : "Loop back: off"}</button><button class="btn ghost" id="clearDone">Clear finished</button>`
+    : "";
+  return `
+    <div class="stats">
+      <div class="stat"><b>${open.length}</b><span>left</span></div>
+      <div class="stat"><b>${done}</b><span>${t.done.toLowerCase()}</span></div>
+      <div class="stat"><b>${dist}</b><span>${dur} drive</span></div>
+    </div>
+    ${nxt ? `<div class="next-card">
+      <div class="kicker">Next ${t.noun}</div>
+      <h2>${esc(nxt.name)}</h2>
+      <div class="meta">${esc(nxt.address)}</div>
+      ${nxt.extra ? `<div class="chip" style="background:#3a332c;color:#f0e2d2">${esc(nxt.extra)}</div>` : ""}
+      <div class="row-actions">
+        <button class="btn primary" data-act="nav" data-id="${nxt.id}">Navigate</button>
+        <button class="btn" data-act="done" data-id="${nxt.id}">${t.done}</button>
+        ${nxt.phone ? `<a class="btn" href="tel:${nxt.phone}">Call</a>` : ""}
+      </div>
+    </div>` : `<div class="empty">Round clear.</div>`}
+    <div class="row-actions" style="margin-bottom:10px">${ownerTools}<button class="btn" id="openMaps">Open in Maps</button></div>
+    ${bag.stops.map((s, i) => `
+      <article class="stop ${s.done ? "done" : ""}">
+        <div class="num">${i + 1}</div>
+        <div>
+          <h3>${esc(s.name)}</h3>
+          <div class="meta">${esc(s.address)}</div>
+          ${s.extra ? `<div class="chip">${esc(s.extra)}</div>` : ""}
+          ${s.note ? `<div class="meta" style="margin-top:4px">${esc(s.note)}</div>` : ""}
+        </div>
+        <div class="ops">
+          <button data-act="nav" data-id="${s.id}">Go</button>
+          <button data-act="done" data-id="${s.id}">${s.done ? "Undo" : t.done}</button>
+          ${isOwner() ? `<button data-act="drop" data-id="${s.id}">Remove</button>` : ""}
+        </div>
+      </article>`).join("")}`;
+}
+function addView() {
+  const t = theme();
+  return `<form id="addForm">
+    <label>Name</label><input name="name" required />
+    <label>Phone</label><input name="phone" />
+    <label>Address</label><input name="address" id="addr" required placeholder="Search a place or street" autocomplete="off" />
+    <div class="suggest" id="suggest" hidden></div>
+    <label>${t.extra}</label><input name="extra" placeholder="${t.extraPh}" />
+    <label>Note for the person on the round</label><textarea name="note"></textarea>
+    <input type="hidden" name="lat" /><input type="hidden" name="lng" />
+    <div class="form-actions" style="margin-top:14px">
+      <button class="btn primary" type="submit">Add to today’s round</button>
+      <button class="btn" type="button" id="saveBookOnly">Save to book only</button>
+    </div>
+  </form>`;
+}
+function bookView() {
+  return `<p class="empty" style="padding-top:0">${isOwner() ? "Reusable contacts for this business only." : "Contacts on this round."}</p>
+    ${bag.book.map((b) => `<div class="book-item"><div><strong>${esc(b.name)}</strong><div class="meta">${esc(b.address || "")}</div></div>
+      <div style="display:flex;gap:6px">${isOwner() ? `<button class="iconbtn" data-act="use" data-id="${b.id}">Add today</button><button class="iconbtn" data-act="forget" data-id="${b.id}">Delete</button>` : ""}</div></div>`).join("")
+      || `<div class="empty">Book is empty.</div>`}`;
+}
+function teamView() {
+  const b = biz();
+  return `<p class="empty" style="padding-top:0">Share this code with your rider. They join this business only.</p>
+    <div class="stat"><b>${esc(b.code || "")}</b><span>join code</span></div>
+    ${crew.map((u) => `<div class="book-item"><div><strong>${esc(u.name)}</strong><div class="meta">${u.role === "owner" ? "Owner" : "On the round"} · ${esc(u.phone)}</div></div></div>`).join("")}`;
+}
+function bind() {
+  document.querySelectorAll("[data-act]").forEach((btn) => btn.onclick = () => act(btn.dataset.act, btn.dataset.id));
+  const opt = document.getElementById("optimize");
+  if (opt) opt.onclick = optimize;
+  const maps = document.getElementById("openMaps");
+  if (maps) maps.onclick = openMaps;
+  const loop = document.getElementById("toggleLoop");
+  if (loop) loop.onclick = async () => { bag.roundtrip = !bag.roundtrip; await persist(); render(); };
+  const clear = document.getElementById("clearDone");
+  if (clear) clear.onclick = async () => { bag.stops = bag.stops.filter((s) => !s.done); await persist(); render(); draw(); };
+  const form = document.getElementById("addForm");
+  if (form) {
+    document.getElementById("addr").oninput = (e) => {
+      clearTimeout(suggestTimer);
+      suggestTimer = setTimeout(() => searchAddr(e.target.value), 280);
+    };
+    form.onsubmit = (e) => { e.preventDefault(); commitForm(form, true); };
+    document.getElementById("saveBookOnly").onclick = () => commitForm(form, false);
+  }
+}
+async function commitForm(form, toRound) {
+  const data = Object.fromEntries(new FormData(form).entries());
+  if (!data.name.trim()) return;
+  const stop = { id: uid(), done: false, name: data.name.trim(), phone: data.phone.trim(), address: data.address.trim(), note: data.note.trim(), extra: data.extra.trim(), lat: data.lat ? Number(data.lat) : null, lng: data.lng ? Number(data.lng) : null };
+  const hit = bag.book.find((b) => b.name.toLowerCase() === stop.name.toLowerCase() && b.address === stop.address);
+  if (hit) Object.assign(hit, stop, { id: hit.id });
+  else bag.book.push({ ...stop });
+  if (toRound) { bag.stops.push({ ...stop, id: uid() }); toast("Added to today’s round"); tab = "round"; }
+  else toast("Saved to address book");
+  bag.summary = null;
+  bag.geometry = null;
+  await persist();
+  render();
+  draw();
+}
+async function searchAddr(q) {
+  const box = document.getElementById("suggest");
+  if (!box || q.trim().length < 3) { if (box) box.hidden = true; return; }
+  try {
+    const json = await (await fetch("https://photon.komoot.io/api/?limit=5&q=" + encodeURIComponent(q))).json();
+    const feats = json.features || [];
+    if (!feats.length) { box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = feats.map((f, i) => {
+      const p = f.properties;
+      return `<button type="button" data-i="${i}">${esc([p.name, p.street, p.housenumber, p.city || p.district, p.state].filter(Boolean).join(", "))}</button>`;
+    }).join("");
+    box.querySelectorAll("button").forEach((b) => b.onclick = () => {
+      const f = feats[Number(b.dataset.i)];
+      const [lng, lat] = f.geometry.coordinates;
+      const p = f.properties;
+      document.getElementById("addr").value = [p.name, p.street, p.housenumber, p.city || p.district, p.state].filter(Boolean).join(", ");
+      document.querySelector("[name=lat]").value = lat;
+      document.querySelector("[name=lng]").value = lng;
+      box.hidden = true;
+    });
+  } catch (e) { box.hidden = true; }
+}
+async function act(kind, id) {
+  if (kind === "done") { const s = bag.stops.find((x) => x.id === id); if (s) s.done = !s.done; }
+  if (kind === "drop" && isOwner()) bag.stops = bag.stops.filter((x) => x.id !== id);
+  if (kind === "nav") { const s = bag.stops.find((x) => x.id === id); if (s) window.open(s.lat ? `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=driving` : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(s.address)}&travelmode=driving`, "_blank"); }
+  if (kind === "use" && isOwner()) { const b = bag.book.find((x) => x.id === id); if (b) bag.stops.push({ ...b, id: uid(), done: false }); }
+  if (kind === "forget" && isOwner()) bag.book = bag.book.filter((x) => x.id !== id);
+  if (kind !== "nav") { await persist(); render(); draw(); }
+}
+function openMaps() {
+  const pts = bag.stops.filter((s) => s.lat && s.lng && !s.done);
+  if (!pts.length) { toast("Need pinned stops"); return; }
+  window.open("https://www.google.com/maps/dir/" + pts.map((s) => `${s.lat},${s.lng}`).join("/"), "_blank");
+}
+async function optimize() {
+  const pinned = bag.stops.filter((s) => s.lat && s.lng);
+  const loose = bag.stops.filter((s) => !(s.lat && s.lng));
+  if (pinned.length < 2) { toast("Pin at least two addresses"); return; }
+  toast("Ordering by road distance…");
+  try {
+    const coords = pinned.map((s) => `${s.lng},${s.lat}`).join(";");
+    const round = bag.roundtrip ? "true" : "false";
+    const dest = bag.roundtrip ? "" : "&destination=last";
+    const json = await (await fetch(`https://router.project-osrm.org/trip/v1/driving/${coords}?source=first&roundtrip=${round}${dest}&geometries=geojson&overview=full`)).json();
+    if (json.code !== "Ok") throw new Error("routing failed");
+    bag.stops = [...json.waypoints.map((w, i) => ({ i, at: w.waypoint_index })).sort((a, b) => a.at - b.at).map((x) => pinned[x.i]), ...loose];
+    bag.summary = { distance: json.trips[0].distance, duration: json.trips[0].duration };
+    bag.geometry = json.trips[0].geometry;
+    await persist(); render(); draw();
+    toast("Shortest loop ready");
+  } catch (e) {
+    toast("Road service busy");
+  }
+}
+function initMap() {
+  map = L.map("map", { zoomControl: false }).setView([12.9716, 77.5946], 12);
+  L.control.zoom({ position: "bottomright" }).addTo(map);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { attribution: "&copy; OSM &copy; CARTO", maxZoom: 19 }).addTo(map);
+  layer = L.layerGroup().addTo(map);
+  draw();
+}
+function draw() {
+  if (!map || !me()) return;
+  layer.clearLayers();
+  const pinned = bag.stops.filter((s) => s.lat && s.lng);
+  const color = theme().accent;
+  pinned.forEach((s, i) => {
+    const icon = L.divIcon({
+      className: "",
+      html: `<div style="width:28px;height:28px;border-radius:50%;background:${s.done ? "#2c6b4f" : color};color:white;display:grid;place-items:center;font:650 12px Outfit,sans-serif;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,.25)">${i + 1}</div>`,
+      iconSize: [28, 28], iconAnchor: [14, 14]
+    });
+    L.marker([s.lat, s.lng], { icon }).addTo(layer).bindPopup(`<b>${esc(s.name)}</b><br>${esc(s.address)}`);
+  });
+  if (bag.geometry) L.geoJSON(bag.geometry, { style: { color: theme().ink, weight: 4, opacity: 0.85 } }).addTo(layer);
+  else if (pinned.length > 1) L.polyline(pinned.map((s) => [s.lat, s.lng]), { color: theme().ink, weight: 3, dashArray: "6 6" }).addTo(layer);
+  if (pinned.length) map.fitBounds(L.latLngBounds(pinned.map((s) => [s.lat, s.lng])).pad(0.25));
+}
+document.getElementById("logout").onclick = logout;
+(async function boot() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return showGate();
+  try {
+    const meData = await api("/api/me");
+    session = { token, user: meData.user, business: meData.business, theme: meData.theme };
+    crew = meData.crew || [];
+    applyTheme();
+    bag = await api("/api/bag");
+    document.getElementById("gate").hidden = true;
+    document.getElementById("shell").hidden = false;
+    paintHeader();
+    initMap();
+    render();
+  } catch (e) {
+    localStorage.removeItem(TOKEN_KEY);
+    showGate();
+  }
+})();
+</script>
+</body>
+</html>

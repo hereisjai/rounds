@@ -1,0 +1,7 @@
+{
+  "name": "rounds",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy"
+  }
+}
