@@ -24,3 +24,29 @@ npx wrangler d1 migrations apply DB --remote && npx wrangler deploy
 | Suresh, milk rider | 9845000002 | 2222 |
 | Kiran, technician owner | 9900000003 | 3333 |
 | Imran, technician | 9900000004 | 4444 |
+
+## Laundry books
+
+`/laundry` is a separate desk for sales and expenses. It does not use the phone PINs above.
+
+The name and passphrase are Cloudflare Worker secrets. They are not in this repo, not in `wrangler.toml`, and not in the database seed.
+
+Set them once, from this folder:
+
+```
+npx wrangler secret put LAUNDRY_USER
+npx wrangler secret put LAUNDRY_PASSWORD
+npx wrangler secret put LAUNDRY_SESSION_SECRET
+```
+
+`LAUNDRY_SESSION_SECRET` can be any long random string. Rotating the passphrase or the session secret signs every open browser out.
+
+For a local `wrangler dev` session, copy `.dev.vars.example` to `.dev.vars` and fill the same three names there. `.dev.vars` is gitignored.
+
+Then apply the new migration and deploy:
+
+```
+npx wrangler d1 migrations apply DB --remote && npx wrangler deploy
+```
+
+Open `/laundry`. The rounds home page links to it. Until the three secrets exist, the page stays locked.

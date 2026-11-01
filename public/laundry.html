@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#14221f" />
+<title>Wash books</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Outfit:wght@380;500;600&display=swap" />
+<style>
+  :root { color-scheme: light; --ink:#14221f; --muted:#5c6560; --line:#e4ddd2; --paper:#f3efe6; --card:#fffdf8; --accent:#115e59; --soft:#e7f3f1; --due:#8f3d1b; --due-soft:#f8ece6; --on:#f4fffd; --on-ink:#f6f1e8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Outfit, "Segoe UI", sans-serif; color: var(--ink); background: var(--paper); }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  main { max-width: 980px; margin: 0 auto; padding: 20px 16px 40px; }
+  header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .brand { display: flex; gap: 10px; align-items: center; }
+  .mark { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--ink); color: var(--on-ink); font-family: Fraunces, serif; }
+  h1, h2, .money, .till b { font-family: Fraunces, serif; font-weight: 640; letter-spacing: -0.03em; }
+  h1 { font-size: 30px; margin: 0; }
+  h2 { font-size: 26px; margin: 0 0 8px; }
+  .sub, .muted { color: var(--muted); }
+  .sub { margin: 2px 0 0; font-size: 14px; }
+  .till { margin-top: 18px; background: var(--ink); color: var(--on-ink); border-radius: 22px; padding: 16px 18px; }
+  .till span { display: block; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #d9cfc2; }
+  .till b { display: block; font-size: 36px; margin-top: 4px; }
+  .till p { margin: 6px 0 0; color: #d9cfc2; font-size: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  .stat { background: var(--soft); border-radius: 16px; padding: 10px 12px; }
+  .stat.due { background: var(--due-soft); }
+  .stat span { color: var(--muted); font-size: 12px; }
+  .stat b { display: block; font-size: 20px; margin-top: 4px; }
+  .stat.due b { color: var(--due); }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; margin-top: 16px; }
+  .month { display: flex; align-items: center; gap: 4px; }
+  .month strong { width: 160px; text-align: center; font-family: Fraunces, serif; font-size: 20px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn { height: 44px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 0 12px; }
+  .btn.on { background: var(--soft); border-color: transparent; font-weight: 600; }
+  .btn.primary { background: var(--accent); color: var(--on); border-color: transparent; }
+  .btn.due { background: var(--due); color: var(--on); border-color: transparent; }
+  .btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 14px; margin-top: 8px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
+  input, select { width: 100%; height: 44px; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; background: #fff; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .actions { display: flex; gap: 8px; margin-top: 14px; }
+  .actions .btn.primary { flex: 1; }
+  .tools { display: flex; gap: 8px; }
+  .tools input { flex: 1; }
+  .err { color: var(--due); min-height: 18px; font-size: 13px; }
+  .day { margin: 14px 0 0; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  article.slip { border-bottom: 1px solid var(--line); padding: 12px 0; }
+  .slip-top { display: flex; justify-content: space-between; gap: 10px; }
+  .slip h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .money { font-size: 22px; margin: 0; }
+  .status.due { color: var(--due); font-weight: 600; }
+  .empty { color: var(--muted); padding: 24px 0; }
+  .bars { margin-top: 18px; }
+  .bars li { list-style: none; margin-top: 10px; }
+  ul { margin: 0; padding: 0; }
+  .track { height: 8px; background: var(--soft); border-radius: 99px; margin-top: 4px; }
+  .fill { height: 8px; background: var(--accent); border-radius: 99px; }
+  .rowline { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+  @media (max-width: 800px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .layout { grid-template-columns: 1fr; }
+    .month strong { width: 132px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">
+      <div class="mark">W</div>
+      <div>
+        <h1>Wash books</h1>
+        <p class="sub">Laundry sales and expenses</p>
+      </div>
+    </div>
+    <button class="btn ghost" id="out" type="button">Sign out</button>
+  </header>
+  <section class="till">
+    <span>In the till</span>
+    <b id="till">₹0</b>
+    <p>Collected this month, after expenses. Unpaid slips stay out of this.</p>
+  </section>
+  <section class="stats">
+    <div class="stat"><span>Billed</span><b id="billed">₹0</b></div>
+    <div class="stat"><span>Collected</span><b id="collected">₹0</b></div>
+    <div class="stat"><span>Spent</span><b id="spent">₹0</b></div>
+    <div class="stat" id="dueStat"><span>Still due</span><b id="due">₹0</b></div>
+  </section>
+  <div class="bar">
+    <div class="month">
+      <button class="btn" id="prev" type="button" aria-label="Previous month">←</button>
+      <strong id="monthLabel"></strong>
+      <button class="btn" id="next" type="button" aria-label="Next month">→</button>
+    </div>
+    <div class="tabs">
+      <button class="btn on" id="tabSales" type="button">Sales</button>
+      <button class="btn" id="tabExpenses" type="button">Expenses</button>
+      <button class="btn" id="download" type="button">Download</button>
+    </div>
+  </div>
+  <p class="err" id="err" role="status"></p>
+  <div class="layout">
+    <section class="card" id="formCard"></section>
+    <section class="card">
+      <div class="tools">
+        <input id="query" placeholder="Search" />
+        <button class="btn" id="dueOnly" type="button">Due only</button>
+      </div>
+      <div id="list"></div>
+      <div class="bars" id="bars"></div>
+    </section>
+  </div>
+</main>
+<script>
+const SERVICES = ["Wash & fold","Wash & iron","Dry clean","Iron only","Bedsheet","Blanket","Curtain","Saree","Stain care","Express","Shoe cleaning","Other"];
+const CATEGORIES = ["Detergent & chemicals","Packaging","Electricity","Water","Rent","Wages","Machine repair","Transport","Gas","Other"];
+const METHODS = ["Cash","UPI","Card"];
+const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+let month = today.slice(0, 7);
+let tab = "sales";
+let dueOnly = false;
+let sales = [];
+let expenses = [];
+let editing = null;
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => {
+    if (ch === "&") return "&" + "amp;";
+    if (ch === "<") return "&" + "lt;";
+    if (ch === ">") return "&" + "gt;";
+    if (ch === '"') return "&" + "quot;";
+    return "&" + "#39;";
+  });
+}
+function money(paise) {
+  const sign = paise < 0 ? "-" : "";
+  const abs = Math.abs(Math.trunc(paise));
+  const whole = Math.floor(abs / 100);
+  const rem = abs % 100;
+  const grouped = new Intl.NumberFormat("en-IN").format(whole);
+  return rem ? sign + "₹" + grouped + "." + String(rem).padStart(2, "0") : sign + "₹" + grouped;
+}
+function paiseInput(paise) {
+  const rem = paise % 100;
+  return rem ? Math.floor(paise / 100) + "." + String(rem).padStart(2, "0") : String(Math.floor(paise / 100));
+}
+function readPaise(raw) {
+  const value = String(raw).trim().replace(/,/g, "");
+  if (!/^\d+(\.\d{1,2})?$/.test(value)) return null;
+  const [whole, frac = ""] = value.split(".");
+  const paise = Number(whole) * 100 + Number((frac + "00").slice(0, 2));
+  if (!Number.isSafeInteger(paise) || paise > 1000000000) return null;
+  return paise;
+}
+function shift(delta) {
+  const [year, mon] = month.split("-").map(Number);
+  const date = new Date(Date.UTC(year, mon - 1 + delta, 1));
+  month = date.getUTCFullYear() + "-" + String(date.getUTCMonth() + 1).padStart(2, "0");
+  load();
+}
+function range() {
+  const [year, mon] = month.split("-").map(Number);
+  const last = new Date(Date.UTC(year, mon, 0)).getUTCDate();
+  return { from: month + "-01", to: month + "-" + String(last).padStart(2, "0") };
+}
+function monthName() {
+  const [year, mon] = month.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(year, mon - 1, 1)));
+}
+function dayName(iso) {
+  const [year, mon, day] = iso.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(year, mon - 1, day)));
+}
+async function api(path, options = {}) {
+  const res = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
+  if (res.status === 401) { location.reload(); throw new Error("Sign in again."); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Could not save that slip.");
+  return data;
+}
+function sum(rows) { return rows.reduce((total, row) => total + row.amountPaise, 0); }
+function setError(message) { document.getElementById("err").textContent = message || ""; }
+
+async function load() {
+  document.getElementById("monthLabel").textContent = monthName();
+  try {
+    const bounds = range();
+    const data = await api("/api/laundry/ledger?from=" + bounds.from + "&to=" + bounds.to);
+    sales = data.sales || [];
+    expenses = data.expenses || [];
+    setError("");
+    paint();
+  } catch (error) {
+    if (error.message !== "Sign in again.") setError(error.message);
+  }
+}
+
+function blankSale() {
+  return { date: today, customer: "", service: SERVICES[0], pieces: "1", weightKg: "", amount: "", paid: true, method: "Cash", note: "" };
+}
+function blankExpense() {
+  return { date: today, category: CATEGORIES[0], payee: "", amount: "", method: "Cash", note: "" };
+}
+let saleDraft = blankSale();
+let expenseDraft = blankExpense();
+
+function field(label, html) { return "<label>" + label + html + "</label>"; }
+function options(list, value) {
+  const known = list.includes(value) ? list : [value, ...list];
+  return known.map((item) => "<option" + (item === value ? " selected" : "") + ">" + esc(item) + "</option>").join("");
+}
+
+function formHtml() {
+  if (tab === "sales") {
+    const draft = saleDraft;
+    return "<h2>" + (editing ? "Edit sale" : "New sale") + "</h2>" +
+      field("Date", "<input name='date' type='date' required value='" + esc(draft.date) + "'>") +
+      field("Customer", "<input name='customer' required value='" + esc(draft.customer) + "'>") +
+      field("Service", "<input name='service' list='services' required value='" + esc(draft.service) + "'><datalist id='services'>" + SERVICES.map((item) => "<option value='" + esc(item) + "'>").join("") + "</datalist>") +
+      "<div class='split'>" + field("Pieces", "<input name='pieces' inputmode='numeric' value='" + esc(draft.pieces) + "'>") + field("Kg, if weighed", "<input name='weightKg' inputmode='decimal' value='" + esc(draft.weightKg) + "'>") + "</div>" +
+      field("Amount (₹)", "<input name='amount' inputmode='decimal' required value='" + esc(draft.amount) + "'>") +
+      "<div class='pair'><button type='button' data-paid='1' class='btn " + (draft.paid ? "primary" : "") + "'>Paid</button><button type='button' data-paid='0' class='btn " + (!draft.paid ? "due" : "") + "'>Due</button></div>" +
+      field("How", "<select name='method'>" + options(METHODS, draft.method) + "</select>") +
+      field("Note", "<input name='note' placeholder='Bill no, stain, UPI ref' value='" + esc(draft.note) + "'>") +
+      "<div class='actions'><button class='btn primary' type='submit'>" + (editing ? "Save sale" : "Add sale") + "</button>" +
+      (editing ? "<button class='btn' type='button' id='cancel'>Cancel</button>" : "") + "</div>";
+  }
+  const draft = expenseDraft;
+  return "<h2>" + (editing ? "Edit expense" : "New expense") + "</h2>" +
+    field("Date", "<input name='date' type='date' required value='" + esc(draft.date) + "'>") +
+    field("What for", "<input name='category' list='categories' required value='" + esc(draft.category) + "'><datalist id='categories'>" + CATEGORIES.map((item) => "<option value='" + esc(item) + "'>").join("") + "</datalist>") +
+    field("Paid to", "<input name='payee' value='" + esc(draft.payee) + "'>") +
+    field("Amount (₹)", "<input name='amount' inputmode='decimal' required value='" + esc(draft.amount) + "'>") +
+    field("How", "<select name='method'>" + options(METHODS, draft.method) + "</select>") +
+    field("Note", "<input name='note' value='" + esc(draft.note) + "'>") +
+    "<div class='actions'><button class='btn primary' type='submit'>" + (editing ? "Save expense" : "Add expense") + "</button>" +
+    (editing ? "<button class='btn' type='button' id='cancel'>Cancel</button>" : "") + "</div>";
+}
+
+function readForm(form) {
+  return Object.fromEntries(new FormData(form).entries());
+}
+
+function paintForm() {
+  const card = document.getElementById("formCard");
+  card.innerHTML = "<form id='slip'>" + formHtml() + "</form>";
+  const form = document.getElementById("slip");
+  form.onsubmit = submit;
+  form.querySelectorAll("[data-paid]").forEach((button) => {
+    button.onclick = () => { saleDraft = { ...saleDraft, ...readForm(form), paid: button.dataset.paid === "1" }; paint(); };
+  });
+  const cancel = document.getElementById("cancel");
+  if (cancel) cancel.onclick = () => { editing = null; if (tab === "sales") saleDraft = blankSale(); else expenseDraft = blankExpense(); paint(); };
+}
+
+function slipHtml(row, kind) {
+  const title = kind === "sale" ? row.customer : row.category;
+  const meta = kind === "sale"
+    ? row.service + " · " + row.pieces + " pc" + (row.pieces === 1 ? "" : "s") + (row.weightKg ? " · " + row.weightKg + " kg" : "")
+    : (row.payee || "No payee");
+  const status = kind === "sale" && !row.paid ? "Due · " + row.method : row.method;
+  return "<article class='slip'><div class='slip-top'><div><h3>" + esc(title) + "</h3><p class='muted'>" + esc(meta) + "</p>" +
+    (row.note ? "<p class='muted'>" + esc(row.note) + "</p>" : "") +
+    "</div><div><p class='money'>" + money(row.amountPaise) + "</p><p class='status" + (kind === "sale" && !row.paid ? " due" : " muted") + "'>" + esc(status) + "</p></div></div>" +
+    "<div class='actions'><button class='btn' type='button' data-edit='" + kind + ":" + esc(row.id) + "'>Edit</button>" +
+    "<button class='btn' type='button' data-del='" + kind + ":" + esc(row.id) + "'>Remove</button></div></article>";
+}
+
+function group(rows) {
+  const groups = [];
+  for (const row of rows) {
+    const last = groups[groups.length - 1];
+    if (!last || last.date !== row.date) groups.push({ date: row.date, rows: [row] });
+    else last.rows.push(row);
+  }
+  return groups;
+}
+
+function paintList() {
+  const query = document.getElementById("query").value.trim().toLowerCase();
+  const source = tab === "sales" ? sales.filter((row) => {
+    if (dueOnly && row.paid) return false;
+    return !query || (row.customer + " " + row.service + " " + row.note + " " + row.method).toLowerCase().includes(query);
+  }) : expenses.filter((row) => !query || (row.category + " " + row.payee + " " + row.note + " " + row.method).toLowerCase().includes(query));
+  document.getElementById("dueOnly").hidden = tab !== "sales";
+  document.getElementById("dueOnly").className = "btn" + (dueOnly ? " due" : "");
+  const host = document.getElementById("list");
+  if (!source.length) {
+    host.innerHTML = "<p class='empty'>" + (tab === "sales" ? "No sales in this month yet. Add the first slip." : "No expenses in this month yet.") + "</p>";
+  } else {
+    host.innerHTML = group(source).map((item) => "<h3 class='day'>" + esc(dayName(item.date)) + "</h3>" + item.rows.map((row) => slipHtml(row, tab === "sales" ? "sale" : "expense")).join("")).join("");
+  }
+  host.querySelectorAll("[data-edit]").forEach((button) => button.onclick = () => startEdit(button.dataset.edit));
+  host.querySelectorAll("[data-del]").forEach((button) => button.onclick = () => removeRow(button));
+  paintBars(tab === "sales" ? sales : expenses, tab === "sales" ? "service" : "category", tab === "sales" ? "What was washed" : "Where the money went");
+}
+
+function paintBars(rows, key, title) {
+  const map = new Map();
+  for (const row of rows) map.set(row[key], (map.get(row[key]) || 0) + row.amountPaise);
+  const items = [...map.entries()].sort((a, b) => b[1] - a[1]);
+  const host = document.getElementById("bars");
+  if (!items.length) { host.innerHTML = ""; return; }
+  const max = items[0][1] || 1;
+  host.innerHTML = "<h2>" + title + "</h2><ul>" + items.map(([name, amount]) => "<li><div class='rowline'><span>" + esc(name) + "</span><span>" + money(amount) + "</span></div><div class='track'><div class='fill' style='width:" + Math.max(4, Math.round(amount / max * 100)) + "%'></div></div></li>").join("") + "</ul>";
+}
+
+function paint() {
+  const billed = sum(sales);
+  const collected = sum(sales.filter((row) => row.paid));
+  const spent = sum(expenses);
+  const due = billed - collected;
+  document.getElementById("till").textContent = money(collected - spent);
+  document.getElementById("billed").textContent = money(billed);
+  document.getElementById("collected").textContent = money(collected);
+  document.getElementById("spent").textContent = money(spent);
+  document.getElementById("due").textContent = money(due);
+  document.getElementById("dueStat").className = "stat" + (due > 0 ? " due" : "");
+  document.getElementById("tabSales").className = "btn" + (tab === "sales" ? " on" : "");
+  document.getElementById("tabExpenses").className = "btn" + (tab === "expenses" ? " on" : "");
+  paintForm();
+  paintList();
+}
+
+function keepDraft() {
+  const form = document.getElementById("slip");
+  if (!form) return;
+  const data = readForm(form);
+  if (tab === "sales") saleDraft = { ...saleDraft, ...data, paid: saleDraft.paid };
+  else expenseDraft = { ...expenseDraft, ...data };
+}
+
+async function submit(event) {
+  event.preventDefault();
+  keepDraft();
+  try {
+    if (tab === "sales") {
+      const pieces = /^\d+$/.test(saleDraft.pieces) ? Number(saleDraft.pieces) : NaN;
+      const amountPaise = readPaise(saleDraft.amount);
+      let weightKg = saleDraft.weightKg.trim();
+      if (weightKg && !/^\d+(\.\d)?$/.test(weightKg)) throw new Error("Weight should be like 2.5.");
+      if (!saleDraft.customer.trim()) throw new Error("Enter the customer.");
+      if (!Number.isInteger(pieces)) throw new Error("Enter how many pieces.");
+      if (amountPaise === null) throw new Error("Enter an amount like 180 or 180.50.");
+      await api("/api/laundry/sales", { method: "POST", body: JSON.stringify({
+        id: editing, date: saleDraft.date, customer: saleDraft.customer, service: saleDraft.service,
+        pieces, weightKg: weightKg ? Number(weightKg) : null, amountPaise, paid: saleDraft.paid, method: saleDraft.method, note: saleDraft.note
+      }) });
+      const keep = { service: saleDraft.service, method: saleDraft.method, date: saleDraft.date };
+      editing = null;
+      saleDraft = { ...blankSale(), ...keep };
+    } else {
+      const amountPaise = readPaise(expenseDraft.amount);
+      if (!expenseDraft.category.trim()) throw new Error("Enter what this was for.");
+      if (amountPaise === null) throw new Error("Enter an amount like 180 or 180.50.");
+      await api("/api/laundry/expenses", { method: "POST", body: JSON.stringify({
+        id: editing, date: expenseDraft.date, category: expenseDraft.category, payee: expenseDraft.payee,
+        amountPaise, method: expenseDraft.method, note: expenseDraft.note
+      }) });
+      const keep = { category: expenseDraft.category, method: expenseDraft.method, date: expenseDraft.date };
+      editing = null;
+      expenseDraft = { ...blankExpense(), ...keep };
+    }
+    await load();
+  } catch (error) {
+    if (error.message !== "Sign in again.") setError(error.message);
+  }
+}
+
+function startEdit(token) {
+  const [kind, id] = token.split(":");
+  tab = kind === "sale" ? "sales" : "expenses";
+  editing = id;
+  if (kind === "sale") {
+    const row = sales.find((item) => item.id === id);
+    if (!row) return;
+    saleDraft = { date: row.date, customer: row.customer, service: row.service, pieces: String(row.pieces), weightKg: row.weightKg ?? "", amount: paiseInput(row.amountPaise), paid: row.paid, method: row.method, note: row.note };
+  } else {
+    const row = expenses.find((item) => item.id === id);
+    if (!row) return;
+    expenseDraft = { date: row.date, category: row.category, payee: row.payee, amount: paiseInput(row.amountPaise), method: row.method, note: row.note };
+  }
+  paint();
+  document.getElementById("formCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function removeRow(button) {
+  if (button.dataset.armed !== "1") {
+    button.dataset.armed = "1";
+    button.textContent = "Confirm remove";
+    button.className = "btn due";
+    return;
+  }
+  const [kind, id] = button.dataset.del.split(":");
+  try {
+    await api("/api/laundry/" + (kind === "sale" ? "sales" : "expenses") + "?id=" + encodeURIComponent(id), { method: "DELETE" });
+    if (editing === id) editing = null;
+    await load();
+  } catch (error) {
+    if (error.message !== "Sign in again.") setError(error.message);
+  }
+}
+
+function csv(value) {
+  const text = String(value ?? "");
+  return /[",\n]/.test(text) ? '"' + text.replaceAll('"', '""') + '"' : text;
+}
+
+document.getElementById("prev").onclick = () => shift(-1);
+document.getElementById("next").onclick = () => shift(1);
+document.getElementById("tabSales").onclick = () => { keepDraft(); tab = "sales"; editing = null; paint(); };
+document.getElementById("tabExpenses").onclick = () => { keepDraft(); tab = "expenses"; editing = null; paint(); };
+document.getElementById("dueOnly").onclick = () => { dueOnly = !dueOnly; paintList(); };
+document.getElementById("query").oninput = () => paintList();
+document.getElementById("out").onclick = async () => { await fetch("/api/laundry/logout", { method: "POST" }); location.reload(); };
+document.getElementById("download").onclick = () => {
+  const lines = ["type,date,name,detail,pieces,kg,amount,status,method,note"];
+  for (const row of sales) lines.push(["sale", row.date, row.customer, row.service, row.pieces, row.weightKg ?? "", (row.amountPaise / 100).toFixed(2), row.paid ? "paid" : "due", row.method, row.note].map(csv).join(","));
+  for (const row of expenses) lines.push(["expense", row.date, row.payee, row.category, "", "", (row.amountPaise / 100).toFixed(2), "paid", row.method, row.note].map(csv).join(","));
+  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "wash-books-" + month + ".csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+};
+load();
+</script>
+</body>
+</html>

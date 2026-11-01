@@ -1,3 +1,5 @@
+import { handleLaundry } from "./laundry.js";
+
 const THEMES = {
   milk: { id: "milk", label: "Milk supplier", tagline: "Customers, crates, house by house.", noun: "customer", extra: "Litres / items", extraPh: "2L toned + 1 curd", done: "Delivered", mark: "M", accent: "#1f6f8b", accentSoft: "#e5f3f6", paper: "#f4f7f6", ink: "#10242c", card: "#ffffff" },
   service: { id: "service", label: "Technician", tagline: "Today’s jobs, one technician, one loop.", noun: "job", extra: "Job type", extraPh: "AC service · 45 min", done: "Done", mark: "T", accent: "#b45309", accentSoft: "#f8efe4", paper: "#f6f4f1", ink: "#1c1915", card: "#fffdf8" },
@@ -80,6 +82,10 @@ export default {
     }
 
     try {
+      if (url.pathname === "/laundry" || url.pathname === "/laundry.html" || url.pathname.startsWith("/api/laundry")) {
+        return await handleLaundry(request, env, url);
+      }
+
       if (url.pathname === "/api/login" && request.method === "POST") {
         const body = await readBody(request);
         const user = await env.DB.prepare("SELECT * FROM users WHERE phone = ? AND pin = ?").bind(String(body.phone || "").trim(), String(body.pin || "").trim()).first();

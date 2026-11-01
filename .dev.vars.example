@@ -1,0 +1,5 @@
+# Copy to .dev.vars for `wrangler dev` only. .dev.vars is gitignored.
+# Production values are Cloudflare secrets, not this file.
+LAUNDRY_USER=
+LAUNDRY_PASSWORD=
+LAUNDRY_SESSION_SECRET=

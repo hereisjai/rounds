@@ -114,6 +114,8 @@
   .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: #f7f1e7; padding: 10px 14px; border-radius: 999px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
   .toast.show { opacity: 1; }
   .linkish { border: 0; background: none; color: var(--accent); padding: 0; font-size: 13px; }
+  .desk-link { margin: 14px 0 0; font-size: 13px; }
+  .desk-link a { color: var(--ink-soft); }
   .hint { font-size: 12px; color: var(--ink-soft); background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin-top: 14px; }
   @media (max-width: 860px) {
     .layout { grid-template-columns: 1fr; }
@@ -129,6 +131,7 @@
     <h1>Rounds</h1>
     <p class="sub" id="gateSub">Sign in with your phone. You only see your own round.</p>
     <div id="gateBody"></div>
+    <p class="desk-link"><a href="/laundry">Laundry books</a> — sales and expenses, separate sign-in.</p>
   </div>
 </div>
 <div class="app" id="shell" hidden>
