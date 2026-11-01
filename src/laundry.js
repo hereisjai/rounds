@@ -224,6 +224,25 @@ document.getElementById("gate").onsubmit = async (event) => {
 </html>`;
 }
 
+async function booksHtml(env, url) {
+  // /laundry.html is a 307 to /laundry under Cloudflare's default HTML handling.
+  // Returning that redirect makes the browser bounce forever after sign-in.
+  for (const path of ["/laundry", "/laundry.html"]) {
+    const asset = await env.ASSETS.fetch(new Request(new URL(path, url.origin), { redirect: "manual" }));
+    if (asset.ok) {
+      const headers = new Headers(asset.headers);
+      headers.set("Cache-Control", "private, no-store");
+      headers.set("X-Robots-Tag", "noindex");
+      headers.delete("Location");
+      return new Response(asset.body, { status: 200, headers });
+    }
+  }
+  return new Response("Could not open the books.", {
+    status: 500,
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+  });
+}
+
 async function readJson(request) {
   try { return await request.json(); } catch { return {}; }
 }
@@ -243,11 +262,7 @@ export async function handleLaundry(request, env, url) {
           headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" }
         });
       }
-      const asset = await env.ASSETS.fetch(new Request(new URL("/laundry.html", url.origin), request));
-      const headers = new Headers(asset.headers);
-      headers.set("Cache-Control", "private, no-store");
-      headers.set("X-Robots-Tag", "noindex");
-      return new Response(asset.body, { status: asset.status, headers });
+      return booksHtml(env, url);
     }
 
     if (url.pathname === "/api/laundry/login" && request.method === "POST") {
